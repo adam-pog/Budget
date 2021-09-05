@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'shelf.budget.apps.BudgetConfig',
+    'shelf.shelf_auth.apps.ShelfAuthConfig',
     'rest_framework',
     'rest_framework.authtoken',
     'django_extensions',
