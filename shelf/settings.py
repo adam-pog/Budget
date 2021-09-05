@@ -133,7 +133,7 @@ AUTH_USER_MODEL = 'budget.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'shelf.budget.authenticate.ExpiringTokenAuthentication',
+        'shelf.shelf_auth.authenticate.ExpiringTokenAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
