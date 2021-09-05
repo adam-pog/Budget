@@ -34,11 +34,12 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'shelf.budget.apps.BudgetConfig',
-    'graphql_auth'
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -128,3 +129,13 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'budget.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'shelf.budget.authenticate.ExpiringTokenAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
