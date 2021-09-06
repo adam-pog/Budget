@@ -17,3 +17,9 @@ class Category(TimeStampedModel):
         on_delete=models.CASCADE
     )
     monthly_amount = models.IntegerField()
+
+    def spent(self):
+        return 100
+
+    def progress(self):
+        return 40

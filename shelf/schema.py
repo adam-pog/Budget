@@ -1,5 +1,7 @@
 import graphene
+import graphql_jwt
 from graphene_django import DjangoObjectType
+from graphql_jwt.decorators import login_required
 
 from shelf.budget.models import *
 
@@ -18,20 +20,35 @@ class UserType(DjangoObjectType):
 class CategoryType(DjangoObjectType):
     class Meta:
         model = Category
-        fields = ('id', 'label', 'monthly_amount', 'user', 'created', 'modified')
+        fields = (
+            'id',
+            'label',
+            'monthly_amount',
+            'user',
+            'created',
+            'modified',
+            'spent'
+        )
+
+    spent = graphene.Int()
+    def resolve_spent(instance, info):
+        return instance.spent()
+
+    progress = graphene.Int()
+    def resolve_progress(instance, info):
+        return instance.progress()
+
 
 class Query(graphene.ObjectType):
-    all_users = graphene.List(UserType)
-    category_by_label = graphene.Field(CategoryType, label=graphene.String(required=True))
+    all_categories = graphene.List(CategoryType)
 
-    def resolve_all_users(root, info):
-        # We can easily optimize query count in the resolve method
-        return User.objects.all()
+    @login_required
+    def resolve_all_categories(self, info):
+        return Category.objects.filter(user_id=info.context.user.id)
 
-    def resolve_category_by_label(root, info, label):
-        try:
-            return Category.objects.get(label=label)
-        except Category.DoesNotExist:
-            return None
+class Mutation(graphene.ObjectType):
+    token_auth = graphql_jwt.ObtainJSONWebToken.Field()
+    # verify_token = graphql_jwt.Verify.Field()
+    # refresh_token = graphql_jwt.Refresh.Field()
 
-schema = graphene.Schema(query=Query)
+schema = graphene.Schema(query=Query, mutation=Mutation)
