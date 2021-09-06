@@ -27,11 +27,28 @@ class CategoryType(DjangoObjectType):
             'user',
             'created',
             'modified',
+            'transactions'
         )
 
     spent = graphene.Int()
+
     def resolve_spent(instance, info):
         return instance.spent()
+
+class TransactionType(DjangoObjectType):
+    class Meta:
+        model = Transaction
+        fields = (
+            'id',
+            'created',
+            'modified',
+            'amount',
+            'source',
+            'date',
+            'recurring',
+            'description',
+            'category'
+        )
 
 class CreateCategory(graphene.Mutation):
     class Arguments:
@@ -68,10 +85,15 @@ class DeleteCategory(graphene.Mutation):
 
 class Query(graphene.ObjectType):
     all_categories = graphene.List(CategoryType)
+    category = graphene.Field(CategoryType, id=graphene.ID(required=True))
 
     @login_required
     def resolve_all_categories(self, info):
-        return Category.objects.filter(user=info.context.user)
+        return Category.objects.prefetch_related('transactions').filter(user=info.context.user)
+
+    @login_required
+    def resolve_category(self, info, id):
+        return Category.objects.get(id=id)
 
 class Mutation(graphene.ObjectType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()

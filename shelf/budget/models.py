@@ -18,6 +18,9 @@ class Category(TimeStampedModel):
     )
     monthly_amount = models.IntegerField()
 
+    def __str__(self):
+        return self.label
+
     def spent(self):
         return 500
 
@@ -32,3 +35,6 @@ class Transaction(TimeStampedModel):
         on_delete=models.CASCADE
     )
     description = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.description
