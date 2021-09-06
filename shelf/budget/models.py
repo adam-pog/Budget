@@ -13,10 +13,22 @@ class Category(TimeStampedModel):
     label = models.CharField(max_length=100)
     user = models.ForeignKey(
         User,
-        related_name='budget_categories',
+        related_name='categories',
         on_delete=models.CASCADE
     )
     monthly_amount = models.IntegerField()
 
     def spent(self):
-        return 100
+        return 500
+
+class Transaction(TimeStampedModel):
+    amount = models.FloatField()
+    source = models.CharField(max_length=100)
+    date = models.DateField()
+    recurring = models.BooleanField(default=False)
+    category = models.ForeignKey(
+        Category,
+        related_name='transactions',
+        on_delete=models.CASCADE
+    )
+    description = models.CharField(max_length=200)
