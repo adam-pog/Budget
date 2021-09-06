@@ -20,6 +20,3 @@ class Category(TimeStampedModel):
 
     def spent(self):
         return 100
-
-    def progress(self):
-        return 40

@@ -27,16 +27,28 @@ class CategoryType(DjangoObjectType):
             'user',
             'created',
             'modified',
-            'spent'
         )
 
     spent = graphene.Int()
     def resolve_spent(instance, info):
         return instance.spent()
 
-    progress = graphene.Int()
-    def resolve_progress(instance, info):
-        return instance.progress()
+class CreateCategory(graphene.Mutation):
+    class Arguments:
+        label = graphene.String()
+        monthly_amount = graphene.Int()
+
+    category = graphene.Field(lambda: CategoryType)
+
+    def mutate(root, info, label, monthly_amount):
+        category = Category(
+            label=label,
+            monthly_amount=monthly_amount,
+            user=info.context.user
+        )
+        category.save()
+
+        return CreateCategory(category=category)
 
 
 class Query(graphene.ObjectType):
@@ -44,10 +56,11 @@ class Query(graphene.ObjectType):
 
     @login_required
     def resolve_all_categories(self, info):
-        return Category.objects.filter(user_id=info.context.user.id)
+        return Category.objects.filter(user=info.context.user)
 
 class Mutation(graphene.ObjectType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
+    create_category = CreateCategory.Field()
     # verify_token = graphql_jwt.Verify.Field()
     # refresh_token = graphql_jwt.Refresh.Field()
 
