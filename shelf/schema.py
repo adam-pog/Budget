@@ -38,7 +38,7 @@ class CreateCategory(graphene.Mutation):
         label = graphene.String()
         monthly_amount = graphene.Int()
 
-    category = graphene.Field(lambda: CategoryType)
+    category = graphene.Field(CategoryType)
 
     def mutate(root, info, label, monthly_amount):
         category = Category(
@@ -49,6 +49,21 @@ class CreateCategory(graphene.Mutation):
         category.save()
 
         return CreateCategory(category=category)
+
+class DeleteCategory(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID()
+
+    category = graphene.Field(CategoryType)
+
+    def mutate(root, info, id):
+        category = Category.objects.get(
+            id=id,
+            user=info.context.user
+        )
+        category.delete()
+
+        return DeleteCategory(category=category)
 
 
 class Query(graphene.ObjectType):
@@ -61,6 +76,7 @@ class Query(graphene.ObjectType):
 class Mutation(graphene.ObjectType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
     create_category = CreateCategory.Field()
+    delete_category = DeleteCategory.Field()
     # verify_token = graphql_jwt.Verify.Field()
     # refresh_token = graphql_jwt.Refresh.Field()
 
