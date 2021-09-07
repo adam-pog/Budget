@@ -30,7 +30,7 @@ class CategoryType(DjangoObjectType):
             'transactions'
         )
 
-    spent = graphene.Int()
+    spent = graphene.Float()
 
     def resolve_spent(instance, info):
         return instance.spent()

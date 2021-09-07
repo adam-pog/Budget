@@ -22,7 +22,7 @@ class Category(TimeStampedModel):
         return self.label
 
     def spent(self):
-        return 500
+        return sum(t.amount for t in self.transactions.all())
 
 class Transaction(TimeStampedModel):
     amount = models.FloatField()
