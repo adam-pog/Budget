@@ -72,7 +72,7 @@ class CreateTransaction(graphene.Mutation):
     class Arguments:
         amount = graphene.Float()
         source = graphene.String()
-        date = graphene.Date()
+        date = graphene.String()
         description = graphene.String()
         category_id = graphene.ID()
 
