@@ -1,5 +1,6 @@
 import graphene
 import graphql_jwt
+from graphene import Date
 from graphene_django import DjangoObjectType
 from graphql_jwt.decorators import login_required
 
@@ -67,6 +68,27 @@ class CreateCategory(graphene.Mutation):
 
         return CreateCategory(category=category)
 
+class CreateTransaction(graphene.Mutation):
+    class Arguments:
+        amount = graphene.Float()
+        source = graphene.String()
+        date = graphene.Date()
+        description = graphene.String()
+        category_id = graphene.ID()
+
+    transaction = graphene.Field(TransactionType)
+
+    def mutate(root, info, amount, source, date, description, category_id):
+        category = Category.objects.get(user=info.context.user, id=category_id)
+        transaction = category.transactions.create(
+            amount=amount,
+            source=source,
+            date=date,
+            description=description
+        )
+
+        return CreateTransaction(transaction=transaction)
+
 class DeleteCategory(graphene.Mutation):
     class Arguments:
         id = graphene.ID()
@@ -98,6 +120,7 @@ class Query(graphene.ObjectType):
 class Mutation(graphene.ObjectType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
     create_category = CreateCategory.Field()
+    create_transaction = CreateTransaction.Field()
     delete_category = DeleteCategory.Field()
     # verify_token = graphql_jwt.Verify.Field()
     # refresh_token = graphql_jwt.Refresh.Field()
