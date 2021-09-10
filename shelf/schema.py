@@ -3,6 +3,7 @@ import graphql_jwt
 from graphene import Date
 from graphene_django import DjangoObjectType
 from graphql_jwt.decorators import login_required
+from django.db.models import Prefetch
 
 from shelf.budget.models import *
 
@@ -16,6 +17,21 @@ class UserType(DjangoObjectType):
             'monthly_income',
             'created',
             'modified'
+        )
+
+class TransactionType(DjangoObjectType):
+    class Meta:
+        model = Transaction
+        fields = (
+            'id',
+            'created',
+            'modified',
+            'amount',
+            'source',
+            'date',
+            'recurring',
+            'description',
+            'category'
         )
 
 class CategoryType(DjangoObjectType):
@@ -35,21 +51,6 @@ class CategoryType(DjangoObjectType):
 
     def resolve_spent(instance, info):
         return instance.spent()
-
-class TransactionType(DjangoObjectType):
-    class Meta:
-        model = Transaction
-        fields = (
-            'id',
-            'created',
-            'modified',
-            'amount',
-            'source',
-            'date',
-            'recurring',
-            'description',
-            'category'
-        )
 
 class CreateCategory(graphene.Mutation):
     class Arguments:
@@ -111,11 +112,14 @@ class Query(graphene.ObjectType):
 
     @login_required
     def resolve_all_categories(self, info):
-        return Category.objects.prefetch_related('transactions').filter(user=info.context.user)
+        return Category.objects.filter(user=info.context.user)
 
     @login_required
     def resolve_category(self, info, id):
-        return Category.objects.get(id=id)
+        # category also uses transactions when calculating 'spent'.
+        # This avoids hitting the db twice when getting 'spent' as well as transaction fields
+        prefetch = Prefetch('transactions', queryset=Transaction.objects.order_by('-date'))
+        return Category.objects.prefetch_related(prefetch).get(id=id)
 
 class Mutation(graphene.ObjectType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
