@@ -76,16 +76,18 @@ class CreateTransaction(graphene.Mutation):
         date = graphene.String()
         description = graphene.String()
         category_id = graphene.ID()
+        recurring = graphene.Boolean()
 
     transaction = graphene.Field(TransactionType)
 
-    def mutate(root, info, amount, source, date, description, category_id):
+    def mutate(root, info, amount, source, date, description, category_id, recurring):
         category = Category.objects.get(user=info.context.user, id=category_id)
         transaction = category.transactions.create(
             amount=amount,
             source=source,
             date=date,
-            description=description
+            description=description,
+            recurring=recurring
         )
 
         return CreateTransaction(transaction=transaction)
