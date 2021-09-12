@@ -5,14 +5,22 @@ from model_utils.models import TimeStampedModel
 class User(AbstractUser, TimeStampedModel):
     first_name = None
     last_name = None
-    monthly_income = models.IntegerField()
+
+class MonthlyBudget(TimeStampedModel):
+    user = models.ForeignKey(
+        User,
+        related_name='budgets',
+        on_delete=models.CASCADE
+    )
+    income = models.IntegerField()
+    date = models.DateField()
 
 class Category(TimeStampedModel):
     verbose_name_plural = "categories"
 
     label = models.CharField(max_length=100)
-    user = models.ForeignKey(
-        User,
+    budget = models.ForeignKey(
+        MonthlyBudget,
         related_name='categories',
         on_delete=models.CASCADE
     )

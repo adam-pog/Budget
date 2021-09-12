@@ -52,6 +52,27 @@ class CategoryType(DjangoObjectType):
     def resolve_spent(instance, info):
         return instance.spent()
 
+class MonthlyBudgetType(DjangoObjectType):
+    class Meta:
+        model = MonthlyBudget
+        fields = (
+            'id',
+            'income'
+        )
+
+    month = graphene.String()
+    year = graphene.String()
+    net = graphene.Int()
+
+    def resolve_month(instance, info):
+        return instance.date.strftime('%B')
+
+    def resolve_year(instance, info):
+        return instance.date.strftime('%Y')
+
+    def resolve_net(instance, info):
+        return 100
+
 class CreateCategory(graphene.Mutation):
     class Arguments:
         label = graphene.String()
@@ -73,19 +94,19 @@ class CreateTransaction(graphene.Mutation):
     class Arguments:
         amount = graphene.Float()
         source = graphene.String()
-        date = graphene.String()
+        day = graphene.Int()
         description = graphene.String()
         category_id = graphene.ID()
         recurring = graphene.Boolean()
 
     transaction = graphene.Field(TransactionType)
 
-    def mutate(root, info, amount, source, date, description, category_id, recurring):
+    def mutate(root, info, amount, source, day, description, category_id, recurring):
         category = Category.objects.get(user=info.context.user, id=category_id)
         transaction = category.transactions.create(
             amount=amount,
             source=source,
-            date=date,
+            date=day,
             description=description,
             recurring=recurring
         )
@@ -110,11 +131,22 @@ class DeleteCategory(graphene.Mutation):
 
 class Query(graphene.ObjectType):
     all_categories = graphene.List(CategoryType)
+    monthly_budgets = graphene.List(MonthlyBudgetType, year=graphene.String())
+    all_budget_years = graphene.List(graphene.String)
     category = graphene.Field(CategoryType, id=graphene.ID(required=True))
 
     @login_required
     def resolve_all_categories(self, info):
         return Category.objects.filter(user=info.context.user)
+
+    @login_required
+    def resolve_monthly_budgets(self, info, year):
+        return MonthlyBudget.objects.filter(user=info.context.user, date__year=year)
+
+    @login_required
+    def resolve_all_budget_years(self, info):
+        years = MonthlyBudget.objects.all().values_list('date__year').distinct().order_by('-date__year')
+        return [year[0] for year in years]
 
     @login_required
     def resolve_category(self, info, id):
