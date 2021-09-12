@@ -4,6 +4,8 @@ from graphene import Date
 from graphene_django import DjangoObjectType
 from graphql_jwt.decorators import login_required
 from django.db.models import Prefetch
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 from shelf.budget.models import *
 
@@ -72,6 +74,39 @@ class MonthlyBudgetType(DjangoObjectType):
 
     def resolve_net(instance, info):
         return 100
+
+class CreateMonthlyBudget(graphene.Mutation):
+    class Arguments:
+        year = graphene.String()
+        month = graphene.String()
+        income = graphene.Int()
+
+    monthly_budget = graphene.Field(MonthlyBudgetType)
+
+    def mutate(root, info, year, month, income):
+        monthly_budget = MonthlyBudget(
+            date=datetime.strptime('%s %s' % (year, month), '%Y %B'),
+            income=income,
+            user=info.context.user
+        )
+        monthly_budget.save()
+
+        return CreateMonthlyBudget(monthly_budget=monthly_budget)
+
+class AutoCreateMonthlyBudget(graphene.Mutation):
+    monthly_budget = graphene.Field(MonthlyBudgetType)
+
+    def mutate(root, info):
+        latest_budget = MonthlyBudget.objects.filter(user=info.context.user).order_by('date').last()
+
+        monthly_budget = MonthlyBudget(
+            date=latest_budget.date + relativedelta(months=1),
+            income=latest_budget.income,
+            user=info.context.user
+        )
+        monthly_budget.save()
+
+        return AutoCreateMonthlyBudget(monthly_budget=monthly_budget)
 
 class CreateCategory(graphene.Mutation):
     class Arguments:
@@ -157,6 +192,8 @@ class Query(graphene.ObjectType):
 
 class Mutation(graphene.ObjectType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
+    create_monthly_budget = CreateMonthlyBudget.Field()
+    auto_create_monthly_budget = AutoCreateMonthlyBudget.Field()
     create_category = CreateCategory.Field()
     create_transaction = CreateTransaction.Field()
     delete_category = DeleteCategory.Field()
