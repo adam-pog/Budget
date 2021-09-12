@@ -112,14 +112,16 @@ class CreateCategory(graphene.Mutation):
     class Arguments:
         label = graphene.String()
         monthly_amount = graphene.Int()
+        budget_id = graphene.ID()
 
     category = graphene.Field(CategoryType)
 
-    def mutate(root, info, label, monthly_amount):
+    def mutate(root, info, label, monthly_amount, budget_id):
+        monthly_budget = MonthlyBudget.objects.get(id=budget_id, user=info.context.user)
         category = Category(
             label=label,
             monthly_amount=monthly_amount,
-            user=info.context.user
+            budget=monthly_budget
         )
         category.save()
 
@@ -157,7 +159,7 @@ class DeleteCategory(graphene.Mutation):
     def mutate(root, info, id):
         category = Category.objects.get(
             id=id,
-            user=info.context.user
+            budget__user=info.context.user
         )
         category.delete()
 
@@ -165,14 +167,14 @@ class DeleteCategory(graphene.Mutation):
 
 
 class Query(graphene.ObjectType):
-    all_categories = graphene.List(CategoryType)
+    all_categories = graphene.List(CategoryType, budget_id=graphene.ID(required=True))
     monthly_budgets = graphene.List(MonthlyBudgetType, year=graphene.String())
     all_budget_years = graphene.List(graphene.String)
     category = graphene.Field(CategoryType, id=graphene.ID(required=True))
 
     @login_required
-    def resolve_all_categories(self, info):
-        return Category.objects.filter(user=info.context.user)
+    def resolve_all_categories(self, info, budget_id):
+        return Category.objects.filter(budget_id=budget_id, budget__user=info.context.user)
 
     @login_required
     def resolve_monthly_budgets(self, info, year):
