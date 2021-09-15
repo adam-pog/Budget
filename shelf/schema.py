@@ -139,11 +139,13 @@ class CreateTransaction(graphene.Mutation):
     transaction = graphene.Field(TransactionType)
 
     def mutate(root, info, amount, source, day, description, category_id, recurring):
-        category = Category.objects.get(user=info.context.user, id=category_id)
+        category = Category.objects.get(budget__user=info.context.user, id=category_id)
+        budget = category.budget
+
         transaction = category.transactions.create(
             amount=amount,
             source=source,
-            date=day,
+            date=budget.date.replace(day=day),
             description=description,
             recurring=recurring
         )
