@@ -73,7 +73,7 @@ class MonthlyBudgetType(DjangoObjectType):
         return instance.date.strftime('%Y')
 
     def resolve_net(instance, info):
-        return 100
+        return sum(c.spent() for c in instance.categories.all())
 
 class CreateMonthlyBudget(graphene.Mutation):
     class Arguments:
@@ -152,6 +152,46 @@ class CreateTransaction(graphene.Mutation):
 
         return CreateTransaction(transaction=transaction)
 
+class EditTransaction(graphene.Mutation):
+    class Arguments:
+        amount = graphene.Float()
+        source = graphene.String()
+        day = graphene.Int()
+        description = graphene.String()
+        recurring = graphene.Boolean()
+        id = graphene.ID()
+
+    transaction = graphene.Field(TransactionType)
+
+    def mutate(root, info, amount, source, day, description, recurring, id):
+        transaction = Transaction.objects.get(id=id, category__budget__user=info.context.user)
+        budget = transaction.category.budget
+
+        transaction.amount = amount
+        transaction.source = source
+        transaction.date = date=budget.date.replace(day=day)
+        transaction.description = description
+        transaction.recurring = recurring
+        transaction.save()
+
+        return EditTransaction(transaction=transaction)
+
+class EditCategory(graphene.Mutation):
+    class Arguments:
+        label = graphene.String()
+        monthly_amount = graphene.Int()
+        id = graphene.ID()
+
+    category = graphene.Field(CategoryType)
+
+    def mutate(root, info, label, monthly_amount, id):
+        category = Category.objects.get(id=id, budget__user=info.context.user)
+        category.label = label
+        category.monthly_amount = monthly_amount
+        category.save()
+
+        return EditCategory(category=category)
+
 class DeleteCategory(graphene.Mutation):
     class Arguments:
         id = graphene.ID()
@@ -167,12 +207,28 @@ class DeleteCategory(graphene.Mutation):
 
         return DeleteCategory(category=category)
 
+class DeleteTransaction(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID()
+
+    transaction = graphene.Field(TransactionType)
+
+    def mutate(root, info, id):
+        transaction = Transaction.objects.get(
+            id=id,
+            category__budget__user=info.context.user
+        )
+        transaction.delete()
+
+        return DeleteTransaction(transaction=transaction)
+
 
 class Query(graphene.ObjectType):
     all_categories = graphene.List(CategoryType, budget_id=graphene.ID(required=True))
     monthly_budgets = graphene.List(MonthlyBudgetType, year=graphene.String())
     all_budget_years = graphene.List(graphene.String)
     category = graphene.Field(CategoryType, id=graphene.ID(required=True))
+    transaction = graphene.Field(TransactionType, id=graphene.ID(required=True))
 
     @login_required
     def resolve_all_categories(self, info, budget_id):
@@ -194,13 +250,20 @@ class Query(graphene.ObjectType):
         prefetch = Prefetch('transactions', queryset=Transaction.objects.order_by('-date'))
         return Category.objects.prefetch_related(prefetch).get(id=id)
 
+    @login_required
+    def resolve_transaction(self, info, id):
+        return Transaction.objects.get(id=id)
+
 class Mutation(graphene.ObjectType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
     create_monthly_budget = CreateMonthlyBudget.Field()
     auto_create_monthly_budget = AutoCreateMonthlyBudget.Field()
     create_category = CreateCategory.Field()
     create_transaction = CreateTransaction.Field()
+    edit_category = EditCategory.Field()
+    edit_transaction = EditTransaction.Field()
     delete_category = DeleteCategory.Field()
+    delete_transaction = DeleteTransaction.Field()
     # verify_token = graphql_jwt.Verify.Field()
     # refresh_token = graphql_jwt.Refresh.Field()
 
