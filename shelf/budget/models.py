@@ -15,6 +15,20 @@ class MonthlyBudget(TimeStampedModel):
     income = models.IntegerField()
     date = models.DateField()
 
+    def copy_from(self, other_budget):
+        categories = other_budget.categories.all()
+
+        for category in categories:
+            transactions = category.transactions.all()
+            category.id = None
+            category.budget = self
+            category.save()
+
+            for transaction in transactions:
+                transaction.id = None
+                transaction.category = category
+                transaction.save()
+
 class Category(TimeStampedModel):
     verbose_name_plural = "categories"
 

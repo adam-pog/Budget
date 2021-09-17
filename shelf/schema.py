@@ -16,7 +16,6 @@ class UserType(DjangoObjectType):
             'id',
             'username',
             'email',
-            'monthly_income',
             'created',
             'modified'
         )
@@ -43,10 +42,10 @@ class CategoryType(DjangoObjectType):
             'id',
             'label',
             'monthly_amount',
-            'user',
             'created',
             'modified',
-            'transactions'
+            'transactions',
+            'budget'
         )
 
     spent = graphene.Float()
@@ -59,7 +58,9 @@ class MonthlyBudgetType(DjangoObjectType):
         model = MonthlyBudget
         fields = (
             'id',
-            'income'
+            'income',
+            'categories',
+            'user'
         )
 
     month = graphene.String()
@@ -97,7 +98,10 @@ class AutoCreateMonthlyBudget(graphene.Mutation):
     monthly_budget = graphene.Field(MonthlyBudgetType)
 
     def mutate(root, info):
-        latest_budget = MonthlyBudget.objects.filter(user=info.context.user).order_by('date').last()
+        transaction_prefetch = Prefetch('transactions', queryset=Transaction.objects.filter(recurring=True))
+        category_prefetch = Prefetch('categories', queryset=Category.objects.prefetch_related(transaction_prefetch))
+
+        latest_budget = MonthlyBudget.objects.prefetch_related(category_prefetch).filter(user=info.context.user).order_by('date').last()
 
         monthly_budget = MonthlyBudget(
             date=latest_budget.date + relativedelta(months=1),
@@ -105,6 +109,7 @@ class AutoCreateMonthlyBudget(graphene.Mutation):
             user=info.context.user
         )
         monthly_budget.save()
+        monthly_budget.copy_from(latest_budget)
 
         return AutoCreateMonthlyBudget(monthly_budget=monthly_budget)
 
@@ -283,11 +288,11 @@ class Query(graphene.ObjectType):
 
     @login_required
     def resolve_all_categories(self, info, budget_id):
-        return Category.objects.filter(budget_id=budget_id, budget__user=info.context.user).order_by('created')
+        return Category.objects.prefetch_related('transactions').filter(budget_id=budget_id, budget__user=info.context.user).order_by('created')
 
     @login_required
     def resolve_monthly_budgets(self, info, year):
-        return MonthlyBudget.objects.filter(user=info.context.user, date__year=year)
+        return MonthlyBudget.objects.prefetch_related('categories__transactions').filter(user=info.context.user, date__year=year).order_by('date__month')
 
     @login_required
     def resolve_all_budget_years(self, info):
