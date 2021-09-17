@@ -49,9 +49,17 @@ class CategoryType(DjangoObjectType):
         )
 
     spent = graphene.Float()
+    month = graphene.String()
+    year = graphene.String()
 
     def resolve_spent(instance, info):
         return instance.spent()
+
+    def resolve_month(instance, info):
+        return instance.budget.date.strftime('%B')
+
+    def resolve_year(instance, info):
+        return instance.budget.date.strftime('%Y')
 
 class MonthlyBudgetType(DjangoObjectType):
     class Meta:
