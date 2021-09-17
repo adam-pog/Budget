@@ -1,12 +1,18 @@
+'''Models for budget app (User, MonthlyBudget, Category, Transaction)'''
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from model_utils.models import TimeStampedModel
 
 class User(AbstractUser, TimeStampedModel):
+    '''User model for authentication'''
+
     first_name = None
     last_name = None
 
 class MonthlyBudget(TimeStampedModel):
+    '''Represents a budget for a given month/year'''
+
     user = models.ForeignKey(
         User,
         related_name='budgets',
@@ -16,6 +22,7 @@ class MonthlyBudget(TimeStampedModel):
     date = models.DateField()
 
     def copy_from(self, other_budget):
+        '''Copies categories and recurring transactions from another budget'''
         categories = other_budget.categories.all()
 
         for category in categories:
@@ -30,6 +37,8 @@ class MonthlyBudget(TimeStampedModel):
                 transaction.save()
 
 class Category(TimeStampedModel):
+    '''Represents a specific category for a budget (i.e. food, rent, etc.)'''
+
     verbose_name_plural = "categories"
 
     label = models.CharField(max_length=100)
@@ -44,9 +53,12 @@ class Category(TimeStampedModel):
         return self.label
 
     def spent(self):
+        '''Calculates the cost of all related transactions'''
         return sum(t.amount for t in self.transactions.all())
 
 class Transaction(TimeStampedModel):
+    '''Represents a specific transaction in a given day'''
+
     amount = models.FloatField()
     source = models.CharField(max_length=100)
     date = models.DateField()
