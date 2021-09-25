@@ -111,6 +111,7 @@ class CreateMonthlyBudget(graphene.Mutation):
 
     monthly_budget = graphene.Field(MonthlyBudgetType)
 
+    @login_required
     def mutate(root, info, year, month, income):
         monthly_budget = MonthlyBudget(
             date=datetime.strptime(f'{year} {month}', '%Y %B'),
@@ -125,6 +126,7 @@ class AutoCreateMonthlyBudget(graphene.Mutation):
     '''GraphQL auto create Monthly Budget mutation'''
     monthly_budget = graphene.Field(MonthlyBudgetType)
 
+    @login_required
     def mutate(root, info):
         transaction_prefetch = Prefetch(
             'transactions', queryset=Transaction.objects.filter(recurring=True)
@@ -156,6 +158,7 @@ class CreateCategory(graphene.Mutation):
 
     category = graphene.Field(CategoryType)
 
+    @login_required
     def mutate(root, info, label, monthly_amount, budget_id):
         monthly_budget = MonthlyBudget.objects.get(id=budget_id, user=info.context.user)
         category = Category(
@@ -179,6 +182,7 @@ class CreateTransaction(graphene.Mutation):
 
     transaction = graphene.Field(TransactionType)
 
+    @login_required
     def mutate(root, info, **fields):
         category = Category.objects.get(budget__user=info.context.user, id=fields['category_id'])
         budget = category.budget
@@ -205,6 +209,7 @@ class EditTransaction(graphene.Mutation):
 
     transaction = graphene.Field(TransactionType)
 
+    @login_required
     def mutate(root, info, **fields):
         transaction = Transaction.objects.get(
             id=fields['id'], category__budget__user=info.context.user
@@ -229,6 +234,7 @@ class EditCategory(graphene.Mutation):
 
     category = graphene.Field(CategoryType)
 
+    @login_required
     def mutate(root, info, **fields):
         category = Category.objects.get(id=fields['id'], budget__user=info.context.user)
         category.label = fields['label']
@@ -248,6 +254,7 @@ class EditMonthlyBudget(graphene.Mutation):
 
     monthly_budget = graphene.Field(MonthlyBudgetType)
 
+    @login_required
     def mutate(root, info, **fields):
         monthly_budget = MonthlyBudget.objects.get(id=fields['id'], user=info.context.user)
         monthly_budget.income = fields['income']
@@ -262,6 +269,7 @@ class DeleteCategory(graphene.Mutation):
 
     category = graphene.Field(CategoryType)
 
+    @login_required
     def mutate(root, info, **fields):
         category = Category.objects.get(
             id=fields['id'],
@@ -278,6 +286,7 @@ class DeleteTransaction(graphene.Mutation):
 
     transaction = graphene.Field(TransactionType)
 
+    @login_required
     def mutate(root, info, **fields):
         transaction = Transaction.objects.get(
             id=fields['id'],
@@ -294,6 +303,7 @@ class DeleteMonthlyBudget(graphene.Mutation):
 
     monthly_budget = graphene.Field(MonthlyBudgetType)
 
+    @login_required
     def mutate(root, info, **fields):
         monthly_budget = MonthlyBudget.objects.get(
             id=fields['id'],
