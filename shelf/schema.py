@@ -88,7 +88,7 @@ class MonthlyBudgetType(DjangoObjectType):
 
     month = graphene.String()
     year = graphene.String()
-    net = graphene.Int()
+    net = graphene.Float()
 
     def resolve_month(self, _):
         '''resolve month field for CategoryType'''

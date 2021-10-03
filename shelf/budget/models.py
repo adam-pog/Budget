@@ -18,7 +18,7 @@ class MonthlyBudget(TimeStampedModel):
         related_name='budgets',
         on_delete=models.CASCADE
     )
-    income = models.IntegerField()
+    income = models.FloatField()
     date = models.DateField()
 
     def copy_from(self, other_budget):
