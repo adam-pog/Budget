@@ -57,7 +57,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3001',
+
 ]
 
 ROOT_URLCONF = 'shelf.urls'
