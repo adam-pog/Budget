@@ -57,7 +57,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'https://budget-shelf.herokuapp.com/'
+    'https://budget-shelf.herokuapp.com'
 ]
 
 ROOT_URLCONF = 'shelf.urls'
