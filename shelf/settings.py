@@ -29,7 +29,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = os.getenv('DEBUG')
 
-ALLOWED_HOSTS = ['budget-shelf.herokuapp.com']
+ALLOWED_HOSTS = ['budget-shelf-backend.herokuapp.com']
 
 
 # Application definition
@@ -57,7 +57,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-
+    'budget-shelf.herokuapp.com'
 ]
 
 ROOT_URLCONF = 'shelf.urls'
