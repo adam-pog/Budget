@@ -248,7 +248,7 @@ class EditMonthlyBudget(graphene.Mutation):
     class Arguments:
         year = graphene.String()
         month = graphene.String()
-        income = graphene.Int()
+        income = graphene.Float()
         id = graphene.ID()
 
 
